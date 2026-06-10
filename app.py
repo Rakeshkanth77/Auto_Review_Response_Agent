@@ -514,4 +514,6 @@ else:
             """
             
             stepper_html += '</div>'
-            st.markdown(stepper_html, unsafe_allow_html=True)
+            # Strip leading indentation from each line to prevent markdown from rendering it as code
+            clean_html = "\n".join([line.strip() for line in stepper_html.split("\n")])
+            st.markdown(clean_html, unsafe_allow_html=True)

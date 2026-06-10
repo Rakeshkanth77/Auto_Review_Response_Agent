@@ -41,8 +41,8 @@ def get_review_agent_graph(api_key: str = None, model_name: str = "openai/gpt-os
         max_tokens=1000
     )
 
-    # Create a bounded LLM for text responses to strictly limit final reply length
-    response_llm = llm.bind(max_tokens=80)
+    # Create a bounded LLM for text responses to limit final reply length (using 1000 to allow reasoning tokens)
+    response_llm = llm.bind(max_tokens=1000)
 
     # Choose structured output method dynamically based on model provider
     if model_name and not model_name.startswith("openai/"):
