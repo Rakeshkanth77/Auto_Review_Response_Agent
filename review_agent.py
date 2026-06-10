@@ -41,9 +41,14 @@ def get_review_agent_graph(api_key: str = None, model_name: str = "openai/gpt-os
         max_tokens=80
     )
 
+    # Choose structured output method dynamically based on model provider
+    method = None
+    if model_name and not model_name.startswith("openai/"):
+        method = "function_calling"
+
     # Bind structured outputs
-    sentiment_model = llm.with_structured_output(SentimentSchema, method="function_calling")
-    diagnosis_model = llm.with_structured_output(DiagnosisSchema, method="function_calling")
+    sentiment_model = llm.with_structured_output(SentimentSchema, method=method)
+    diagnosis_model = llm.with_structured_output(DiagnosisSchema, method=method)
 
     # Node 1: Sentiment Analysis
     def find_sentiment(state: ReviewState):
