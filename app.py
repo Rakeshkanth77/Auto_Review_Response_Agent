@@ -10,9 +10,13 @@ load_dotenv(override=True)
 
 # Resolve API Key & model settings globally for deployment
 api_key_input = ""
-if "GROQ_API_KEY" in st.secrets:
-    api_key_input = st.secrets["GROQ_API_KEY"]
-else:
+try:
+    if "GROQ_API_KEY" in st.secrets:
+        api_key_input = st.secrets["GROQ_API_KEY"]
+except Exception:
+    pass
+
+if not api_key_input:
     api_key_input = os.getenv("GROQ_API_KEY") or ""
 
 model_name = "openai/gpt-oss-120b"
