@@ -33,13 +33,16 @@ def get_review_agent_graph(api_key: str = None, model_name: str = "openai/gpt-os
     if not effective_api_key:
         raise ValueError("API Key (GROQ_API_KEY or OPENAI_API_KEY) is required.")
 
-    # Initialize the LLM
+    # Initialize the LLM with enough tokens for structured extraction
     llm = ChatOpenAI(
         model=model_name,
         base_url=base_url,
         api_key=effective_api_key,
-        max_tokens=80
+        max_tokens=1000
     )
+
+    # Create a bounded LLM for text responses to strictly limit final reply length
+    response_llm = llm.bind(max_tokens=80)
 
     # Choose structured output method dynamically based on model provider
     if model_name and not model_name.startswith("openai/"):
@@ -79,7 +82,7 @@ CRITICAL RULES:
 3. Do NOT write it like an email. Do NOT include greetings (e.g., "Dear Customer"), placeholders (e.g., "[Customer Name]"), signatures, or closing warm regards.
 4. Start the response directly.
 """
-        result = llm.invoke(prompt)
+        result = response_llm.invoke(prompt)
         current_history = state.get('history', []) + ['positive_response']
         return {
             'response': result.content,
@@ -116,7 +119,7 @@ CRITICAL RULES:
 3. Do NOT write it like an email. Do NOT include greetings (e.g., "Dear Valued Customer"), placeholders (e.g., "[Customer Name]", "[Your Name]"), signatures, or closing salutations (e.g., "Warm regards" or "Sincerely").
 4. Start the response directly.
 """
-        result = llm.invoke(prompt)
+        result = response_llm.invoke(prompt)
         current_history = state.get('history', []) + ['negative_response']
         return {
             'response': result.content,
