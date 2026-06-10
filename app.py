@@ -8,6 +8,16 @@ import datetime
 # Load env variables
 load_dotenv(override=True)
 
+# Resolve API Key & model settings globally for deployment
+api_key_input = ""
+if "GROQ_API_KEY" in st.secrets:
+    api_key_input = st.secrets["GROQ_API_KEY"]
+else:
+    api_key_input = os.getenv("GROQ_API_KEY") or ""
+
+model_name = "openai/gpt-oss-120b"
+base_url = "https://api.groq.com/openai/v1"
+
 # Set page config
 st.set_page_config(
     page_title="Aura Threadworks | AI Customer Support Agent POC",
@@ -187,43 +197,7 @@ with st.sidebar:
     st.caption("AI-Powered E-commerce & Support Agent")
     st.divider()
     
-    st.markdown("#### Agent Settings")
-    
-    # API Key management
-    default_key = os.getenv("GROQ_API_KEY") or ""
-    api_key_input = st.text_input(
-        "Groq API Key",
-        value=default_key,
-        type="password",
-        help="Provide your Groq API key to run the LangGraph review-reply agent."
-    )
-    
-    # Model configuration
-    model_choice = st.selectbox(
-        "LLM Model (Groq)",
-        options=[
-            "openai/gpt-oss-120b",
-            "llama-3.3-70b-versatile",
-            "llama-3.1-8b-instant",
-            "mixtral-8x7b-32768",
-            "gemma2-9b-it"
-        ],
-        index=0,
-        help="Select the model to run structural reasoning and output synthesis."
-    )
-    
-    custom_model_toggle = st.checkbox("Use custom model name")
-    if custom_model_toggle:
-        model_name = st.text_input("Model Name", value="openai/gpt-oss-120b")
-    else:
-        model_name = model_choice
-        
-    base_url = st.text_input(
-        "Groq Base URL",
-        value="https://api.groq.com/openai/v1",
-        help="Groq API compatible endpoint URL."
-    )
-    
+
     st.divider()
     st.markdown("#### Tech Stack & Architecture")
     st.markdown("""
@@ -373,7 +347,7 @@ else:
         # Trigger review agent
         if st.button("Submit Review & Trigger AI Support Response", type="primary", use_container_width=True):
             if not api_key_input:
-                st.error("Please provide a Groq API Key in the sidebar to run the review agent.")
+                st.error("Groq API Key is not configured. Please add it to your environment variables or Streamlit secrets.")
             elif not review_text.strip():
                 st.warning("Please type a review before submitting.")
             else:
