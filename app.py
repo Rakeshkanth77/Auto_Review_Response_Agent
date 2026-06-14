@@ -27,7 +27,7 @@ st.set_page_config(
     page_title="Aura Threadworks | AI Customer Support Agent POC",
     page_icon="🛍️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # Custom Styling (CSS Injection)
@@ -194,27 +194,62 @@ TEST_REVIEWS = {
     }
 }
 
-# Sidebar - Configuration
-with st.sidebar:
-    st.image("https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=200&auto=format&fit=crop&q=80", width=120)
-    st.markdown("### Aura Threadworks POC")
-    st.caption("AI-Powered E-commerce & Support Agent")
-    st.divider()
-    
+# Initialize session state for dialog and key early
+if 'groq_api_key' not in st.session_state:
+    st.session_state.groq_api_key = api_key_input
+if 'about_dialog_shown' not in st.session_state:
+    st.session_state.about_dialog_shown = False
 
-    st.divider()
-    st.markdown("#### Tech Stack & Architecture")
+# Dialog implementation
+@st.dialog("About this Project", width="large")
+def show_about_dialog():
     st.markdown("""
-    - **Frontend**: Streamlit (Premium UI)
-    - **Agent Framework**: LangGraph
-    - **Chains**: LangChain + Pydantic
-    - **Inference**: Groq API
-    """)
-    st.caption("Developed as a Portfolio Proof-of-Concept")
+    ### 🛍️ AI-Powered Customer Support Agent POC
+    Welcome to **Aura Threadworks**! This proof-of-concept showcases an automated customer review response system. 
+    
+    Using a multi-step **LangGraph** workflow, the AI agent:
+    1. **Analyzes Sentiment**: Detects if a review is positive or negative.
+    2. **Diagnoses Issue**: For negative reviews, extracts the category of the issue (UX/UI, bug/defect, urgent support), the user's emotional tone, and the urgency level.
+    3. **Empathetic Response**: Drafts a tailored, helpful, and policy-compliant reply (under 50 words) addressing the concerns.
 
-# Main Title Header
-st.markdown('<p class="brand-title">AURA THREADWORKS</p>', unsafe_allow_html=True)
-st.markdown('<p class="brand-subtitle">Curated Sustainable Luxury & Smart Customer Care</p>', unsafe_allow_html=True)
+    ---
+    
+    ### 🚀 How to Test
+    1. **Browse the collection** on the main page.
+    2. Click **"Details & Review"** on any product.
+    3. Scroll down to the **"Test the Review Response Agent"** section.
+    4. Type a custom review or click one of the **Auto-fill Test Templates** (e.g. *Negative (UX/UI - Misleading Photo)*, *Negative (Urgent Support - Broken Zipper)*).
+    5. Click **"Submit Review & Trigger AI Support Response"** to run the LangGraph agent!
+    
+    ---
+    
+    ### 🔑 API Configuration
+    Configure your Groq API key below to override the default environment variable key.
+    """)
+    
+    st.session_state.groq_api_key = st.text_input(
+        "Groq API Key",
+        value=st.session_state.groq_api_key,
+        type="password",
+        help="If left blank, it falls back to the environment key."
+    )
+    if st.button("Close & Start Testing", type="primary", use_container_width=True):
+        st.rerun()
+
+# Automatically show dialog on first launch
+if not st.session_state.about_dialog_shown:
+    st.session_state.about_dialog_shown = True
+    show_about_dialog()
+
+# Main Title Header with Info popup trigger
+col_title, col_info = st.columns([5, 1])
+with col_title:
+    st.markdown('<p class="brand-title">AURA THREADWORKS</p>', unsafe_allow_html=True)
+    st.markdown('<p class="brand-subtitle">Curated Sustainable Luxury & Smart Customer Care</p>', unsafe_allow_html=True)
+with col_info:
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("ℹ️ About & Setup", use_container_width=True):
+        show_about_dialog()
 
 # Session state initialization
 if 'selected_product' not in st.session_state:
@@ -350,8 +385,8 @@ else:
         
         # Trigger review agent
         if st.button("Submit Review & Trigger AI Support Response", type="primary", use_container_width=True):
-            if not api_key_input:
-                st.error("Groq API Key is not configured. Please add it to your environment variables or Streamlit secrets.")
+            if not st.session_state.groq_api_key:
+                st.error("Groq API Key is not configured. Please add it to the 'About & Setup' popup or environment variables.")
             elif not review_text.strip():
                 st.warning("Please type a review before submitting.")
             else:
@@ -360,7 +395,7 @@ else:
                         # Call the review responder logic
                         result = run_review_flow(
                             review_text=review_text,
-                            api_key=api_key_input,
+                            api_key=st.session_state.groq_api_key,
                             model_name=model_name,
                             base_url=base_url
                         )
